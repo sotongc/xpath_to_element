@@ -1,0 +1,19 @@
+{
+  "name": "xpath_to_element",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sotongc/xpath_to_element.git"
+  },
+  "author": "Guo Chen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sotongc/xpath_to_element/issues"
+  },
+  "homepage": "https://github.com/sotongc/xpath_to_element#readme"
+}
