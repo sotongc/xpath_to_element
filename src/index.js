@@ -48,7 +48,7 @@ var judge_type=(regexp,pattern)=>{
 var selector={
 	id:(xpath)=>{
 		return xpath.replace(/(\/|\/\/)?(\*\[\@id\=\"([\w\d-]+)\"\])/,($1,$2,$3,$4)=>{
-			return ($2==="\u005c"?"\u003e":($2==="\u005c\u005c"?"\u0020":""))+"#"+$4;
+			return typeof $4==="number"?`*[@id='${$4}']`:`#${$4}`;
 		});
 	},
 	class:(xpath)=>{
@@ -57,11 +57,9 @@ var selector={
 		});
 	},
 	tag:(xpath)=>{
-		let i=0;
-		return `.querySelectorAll(${xpath.replace(/(\/|\/\/)?([a-z]+)(\[\d+\])?/,($1,$2,$3,$4)=>{
-			i=$4-1;
-			return ($2==="\u005c"?"\u003e":($2==="\u005c\u005c"?"\u0020":""))+$3
-		})})[${i}]`;
+		return xpath.replace(/(\/|\/\/)?([a-z]+)(\[\d+\])?/,($1,$2,$3,$4)=>{
+			return ($2==="\u005c"?"\u003e":($2==="\u005c\u005c"?"\u0020":""))+$3+($4-1)+",";
+		});
 	},
 	attr:(xpath)=>{
 		return xpath.replace(/(\/|\/\/)?(\*\[\@(?!id|class)([\w-]+)\=\"([\w\d-]+)\"\])/,($1,$2,$3,$4,$5)=>{
@@ -71,6 +69,19 @@ var selector={
 };
 
 var handler=[selector.id,selector.class,selector.tag,selector.attr];
+
+var select_target_child=(element,tagname,index)=>{
+	let nodelist=element.children;
+	let childlist=[];
+
+	for(let i=0;i<nodelist.length;i++;){
+		if(nodelist[i].tagName.toLowerCase()===tagname){
+			childlist.push(nodelist[i]);
+		}
+	}
+
+	return childlist[index];
+};
 
 
 
@@ -83,12 +94,18 @@ var compiler=(chain)=>{
 		is_attr:/\/+(\*|[a-z]+)\[\@(?!id|class)[\w-]+\=\"[\w\d_-]+\"\]/
 	};
 
+	let raw_selector="";
+
 	return chain.map((xpath,i)=>{
 		//remove the directory for the root node
 		if(!i)
 			xpath=xpath.replace(regexp.is_first,"");
 
 		//compile the xpath to the selector
-		
+		raw_selector+=handler(judge_type(regexp,xpath));
+
+		//#ab>.tip[1],>a[4]
+		//#ab>.tip[1], a[4]
+		let selectors=raw_selector.replace(/\,\>/,">")
 	});
 };
