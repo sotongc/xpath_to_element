@@ -70,7 +70,7 @@ var selector={
 
 var handler=[selector.id,selector.class,selector.tag,selector.attr];
 
-var select_target_child=(element,tagname,index)=>{
+var select_target_child=(element,tagname)=>{
 	let nodelist=element.children;
 	let childlist=[];
 
@@ -80,7 +80,7 @@ var select_target_child=(element,tagname,index)=>{
 		}
 	}
 
-	return childlist[index];
+	return childlist;
 };
 
 
@@ -96,16 +96,47 @@ var compiler=(chain)=>{
 
 	let raw_selector="";
 
-	return chain.map((xpath,i)=>{
+	chain.map((xpath,i)=>{
 		//remove the directory for the root node
 		if(!i)
 			xpath=xpath.replace(regexp.is_first,"");
 
 		//compile the xpath to the selector
 		raw_selector+=handler(judge_type(regexp,xpath));
-
-		//#ab>.tip[1],>a[4]
-		//#ab>.tip[1], a[4]
-		let selectors=raw_selector.replace(/\,\>/,">")
 	});
+
+	//#ab>.tip[1],>a[4]
+	//#ab>.tip[1], a[4]
+	let selectors=raw_selector.split(",");
+	let has_index=/\[\d+\]$/;
+	let is_child={
+		next:/^\>/,
+		all:/^\u0020/
+	};
+	let relation=/^(\>|\u0020)/;
+
+	let selector_str="",index="",method="";
+
+	selectors=selectors.map((selector,i)=>{
+		selector_str=selector.replace(has_index,"").replace(relation,"");
+		index=has_index.exec(selector)[0]||"[0]";
+
+		if(is_child.next.test(selector)){
+			method=`element=select_target_child(element,${selector_str})${index}`;
+		}
+		else if(is_child.all.test(selector)){
+			method=`element=element.querySelectorAll(${selector_str})${index}`;
+		}
+		else{
+			method=`element=element.querySelectorAll(${selector_str})${index}`;
+		}
+		return method;
+	});
+
+	return new Function([
+		"var is_html=this instanceof HTMLElement;",
+		"var element=is_html?this:document;",
+		selectors.join(";"),
+		"return element;"
+	]);
 };
